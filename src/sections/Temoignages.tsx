@@ -24,8 +24,8 @@ export default function Temoignages() {
         </AnimateOnScroll>
         <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
           {temoignages.map((t, index) => (
-            <AnimateOnScroll key={t.prenom} delay={index * 0.1}>
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+            <AnimateOnScroll key={t.prenom} delay={index * 0.1} className="h-full">
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex gap-1">
                   {Array.from({ length: t.note }).map((_, i) => (
                     <svg
@@ -44,7 +44,7 @@ export default function Temoignages() {
                 <p className="mt-3 text-sm leading-relaxed text-zinc-600 sm:mt-4">
                   &ldquo;{t.texte}&rdquo;
                 </p>
-                <div className="mt-4 border-t border-zinc-100 pt-3 sm:pt-4">
+                <div className="mt-auto border-t border-zinc-100 pt-3 sm:pt-4">
                   <p className="text-sm font-bold text-secondary">{t.prenom}</p>
                   <p className="text-xs text-zinc-500">
                     {t.ville}, La Réunion
