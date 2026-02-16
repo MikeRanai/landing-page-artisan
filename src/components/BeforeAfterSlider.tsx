@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 
@@ -16,10 +16,11 @@ export default function BeforeAfterSlider({
   label,
 }: BeforeAfterSliderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const isDragging = useRef(false);
   const position = useMotionValue(50);
-  const clipPath = useTransform(position, (v) => `inset(0 ${100 - v}% 0 0)`);
 
+  const clipPath = useTransform(position, (v) => `inset(0 ${100 - v}% 0 0)`);
+  const separatorLeft = useTransform(position, (v) => `${v}%`);
   const beforeOpacity = useTransform(position, [0, 30, 50], [0, 1, 1]);
   const afterOpacity = useTransform(position, [50, 70, 100], [1, 1, 0]);
 
@@ -29,8 +30,7 @@ export default function BeforeAfterSlider({
       if (!container) return;
       const rect = container.getBoundingClientRect();
       const x = clientX - rect.left;
-      const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      position.set(percent);
+      position.set(Math.max(0, Math.min(100, (x / rect.width) * 100)));
     },
     [position],
   );
@@ -38,8 +38,8 @@ export default function BeforeAfterSlider({
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      setIsDragging(true);
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      isDragging.current = true;
+      containerRef.current?.setPointerCapture(e.pointerId);
       updatePosition(e.clientX);
     },
     [updatePosition],
@@ -47,21 +47,21 @@ export default function BeforeAfterSlider({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!isDragging) return;
+      if (!isDragging.current) return;
       updatePosition(e.clientX);
     },
-    [isDragging, updatePosition],
+    [updatePosition],
   );
 
   const handlePointerUp = useCallback(() => {
-    setIsDragging(false);
+    isDragging.current = false;
   }, []);
 
   const handleReset = useCallback(() => {
-    if (!isDragging) {
+    if (!isDragging.current) {
       animate(position, 50, { type: "spring", stiffness: 300, damping: 25 });
     }
-  }, [isDragging, position]);
+  }, [position]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -76,6 +76,7 @@ export default function BeforeAfterSlider({
         onPointerLeave={handlePointerUp}
         onDoubleClick={handleReset}
         className="relative aspect-[4/3] w-full cursor-grab select-none overflow-hidden rounded-2xl border border-zinc-200 shadow-sm active:cursor-grabbing"
+        style={{ touchAction: "none", WebkitUserSelect: "none" }}
       >
         {/* After image (fond) */}
         <Image
@@ -88,7 +89,10 @@ export default function BeforeAfterSlider({
         />
 
         {/* Before image (clip) */}
-        <motion.div className="absolute inset-0" style={{ clipPath }}>
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={{ clipPath }}
+        >
           <Image
             src={beforeImage}
             alt="Avant travaux"
@@ -101,21 +105,16 @@ export default function BeforeAfterSlider({
 
         {/* Barre de séparation */}
         <motion.div
-          className="absolute top-0 bottom-0 z-10 w-0.5 bg-white shadow-[0_0_8px_rgba(0,0,0,0.3)]"
-          style={{ left: useTransform(position, (v) => `${v}%`) }}
+          className="absolute top-0 bottom-0 z-10 w-0.5 bg-white shadow-[0_0_8px_rgba(0,0,0,0.3)] will-change-transform"
+          style={{ left: separatorLeft }}
         />
 
         {/* Poignée */}
         <motion.div
-          className="absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2"
-          style={{ left: useTransform(position, (v) => `${v}%`) }}
+          className="absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 will-change-transform"
+          style={{ left: separatorLeft }}
         >
-          <motion.div
-            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-primary shadow-lg"
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 15 }}
-          >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-primary shadow-lg">
             <svg
               width="20"
               height="20"
@@ -130,7 +129,7 @@ export default function BeforeAfterSlider({
               <path d="M8 3L3 8l5 5" />
               <path d="M16 3l5 5-5 5" />
             </svg>
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* Labels Avant / Après */}
