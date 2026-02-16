@@ -83,6 +83,25 @@ Implémentation de 10 améliorations pour booster la conversion et le SEO local 
 
 ---
 
+## Améliorations post-implémentation
+
+### Cards de hauteur égale
+- **Services** (`src/sections/Services.tsx`) : `h-full` sur wrapper + `flex h-full flex-col` sur card + `flex-1` sur description
+- **Garanties** (`src/sections/Garanties.tsx`) : `h-full` sur wrapper + `flex h-full flex-col` sur card
+- **Témoignages** (`src/sections/Temoignages.tsx`) : `h-full` sur wrapper + `flex h-full flex-col` sur card + `mt-auto` sur bloc prénom/ville
+
+### Slider Avant/Après — optimisation mobile
+- **Fichier modifié :** `src/components/BeforeAfterSlider.tsx`
+- **V1 :** Remplacement de `isDragging` useState par useRef (zéro re-render), ajout `touch-action: none`, `setPointerCapture` sur container, `will-change-transform`, suppression whileHover/whileTap
+- **V2 (réécriture complète) :** Suppression totale de Framer Motion du slider
+  - Manipulation DOM directe via refs (`style.clipPath`, `style.left`, `style.opacity`)
+  - `requestAnimationFrame` throttle sur chaque pointermove (1 update/frame max)
+  - Animation spring de reset en JS pur (rAF loop) au lieu de `animate()` Framer Motion
+  - `willChange: "clip-path"` / `"left"` pour hints GPU
+  - Labels avec `transition-opacity duration-150` en CSS
+
+---
+
 ## Modifications supplémentaires
 
 ### Navigation
@@ -114,7 +133,7 @@ Implémentation de 10 améliorations pour booster la conversion et le SEO local 
 | `src/components/AnimateOnScroll.tsx` | Wrapper animation scroll |
 | `src/app/icon.svg` | Favicon SVG personnalisé |
 
-## Fichiers modifiés (7)
+## Fichiers modifiés (8)
 
 | Fichier | Modifications |
 |---------|--------------|
@@ -125,12 +144,26 @@ Implémentation de 10 améliorations pour booster la conversion et le SEO local 
 | `src/sections/Contact.tsx` | Client component, form state, mode démo |
 | `src/components/Navbar.tsx` | +lien "Avis" |
 | `src/components/Footer.tsx` | +liens Avis/FAQ, refactoring href |
+| `src/components/BeforeAfterSlider.tsx` | Réécriture perf : DOM direct, sans Framer Motion, rAF throttle |
 
 ## Fichier supprimé (1)
 
 | Fichier | Raison |
 |---------|--------|
 | `src/app/favicon.ico` | Remplacé par icon.svg |
+
+---
+
+## Historique des commits
+
+| Commit | Description |
+|--------|-------------|
+| `feat: implement 10 conversion & SEO improvements` | Implémentation complète des 10 recommandations |
+| `fix: equal height service cards` | Cards Services de hauteur égale |
+| `fix: equal height guarantee cards` | Cards Garanties de hauteur égale |
+| `fix: equal height testimonial cards` | Cards Témoignages de hauteur égale |
+| `perf: improve before/after slider fluidity on mobile` | V1 optimisation slider (useRef, touch-action) |
+| `perf: rewrite before/after slider with direct DOM manipulation` | V2 réécriture complète sans Framer Motion |
 
 ---
 
