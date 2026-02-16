@@ -99,6 +99,13 @@ Implémentation de 10 améliorations pour booster la conversion et le SEO local 
   - Animation spring de reset en JS pur (rAF loop) au lieu de `animate()` Framer Motion
   - `willChange: "clip-path"` / `"left"` pour hints GPU
   - Labels avec `transition-opacity duration-150` en CSS
+- **V3 (fluidité maintien du doigt) :** Events natifs pour drag continu naturel
+  - Remplacement des events React synthétiques par `addEventListener` natif (zéro overhead)
+  - `pointerup` écouté sur `window` au lieu du container — le drag ne se coupe plus hors zone
+  - Suppression de `onPointerLeave` qui coupait le drag au moindre mouvement latéral
+  - Gestion de `pointercancel` (interruptions : notification, appel entrant, etc.)
+  - Suppression du throttle rAF — application directe pour zéro latence
+  - Extraction de `springTo()` pour le reset au double-tap
 
 ---
 
@@ -164,6 +171,8 @@ Implémentation de 10 améliorations pour booster la conversion et le SEO local 
 | `fix: equal height testimonial cards` | Cards Témoignages de hauteur égale |
 | `perf: improve before/after slider fluidity on mobile` | V1 optimisation slider (useRef, touch-action) |
 | `perf: rewrite before/after slider with direct DOM manipulation` | V2 réécriture complète sans Framer Motion |
+| `docs: update SESSION_LOG with all recent changes` | Mise à jour du log |
+| `perf: use native events for smooth sustained touch drag` | V3 events natifs pour drag continu fluide |
 
 ---
 
