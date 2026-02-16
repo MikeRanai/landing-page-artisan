@@ -71,8 +71,8 @@ export default function Garanties() {
         </AnimateOnScroll>
         <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
           {garanties.map((item, index) => (
-            <AnimateOnScroll key={item.titre} delay={index * 0.1}>
-              <div className="rounded-2xl border border-zinc-200 bg-primary-light p-5 shadow-sm sm:p-6">
+            <AnimateOnScroll key={item.titre} delay={index * 0.1} className="h-full">
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-primary-light p-5 shadow-sm sm:p-6">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/20 text-primary sm:h-14 sm:w-14">
                   {item.icon}
                 </div>
