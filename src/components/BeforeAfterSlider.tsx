@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 
 type BeforeAfterSliderProps = {
   beforeImage: string;
@@ -16,52 +15,93 @@ export default function BeforeAfterSlider({
   label,
 }: BeforeAfterSliderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const beforeClipRef = useRef<HTMLDivElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
+  const beforeLabelRef = useRef<HTMLSpanElement>(null);
+  const afterLabelRef = useRef<HTMLSpanElement>(null);
   const isDragging = useRef(false);
-  const position = useMotionValue(50);
+  const positionRef = useRef(50);
+  const rafId = useRef(0);
 
-  const clipPath = useTransform(position, (v) => `inset(0 ${100 - v}% 0 0)`);
-  const separatorLeft = useTransform(position, (v) => `${v}%`);
-  const beforeOpacity = useTransform(position, [0, 30, 50], [0, 1, 1]);
-  const afterOpacity = useTransform(position, [50, 70, 100], [1, 1, 0]);
+  const applyPosition = useCallback((percent: number) => {
+    positionRef.current = percent;
+    if (beforeClipRef.current)
+      beforeClipRef.current.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+    if (lineRef.current) lineRef.current.style.left = `${percent}%`;
+    if (handleRef.current) handleRef.current.style.left = `${percent}%`;
+    if (beforeLabelRef.current) {
+      beforeLabelRef.current.style.opacity =
+        percent < 30 ? "0" : "1";
+    }
+    if (afterLabelRef.current) {
+      afterLabelRef.current.style.opacity =
+        percent > 70 ? "0" : "1";
+    }
+  }, []);
 
-  const updatePosition = useCallback(
-    (clientX: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const x = clientX - rect.left;
-      position.set(Math.max(0, Math.min(100, (x / rect.width) * 100)));
-    },
-    [position],
-  );
+  useEffect(() => {
+    applyPosition(50);
+  }, [applyPosition]);
+
+  const getPercent = useCallback((clientX: number) => {
+    const container = containerRef.current;
+    if (!container) return 50;
+    const rect = container.getBoundingClientRect();
+    return Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+  }, []);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
       isDragging.current = true;
       containerRef.current?.setPointerCapture(e.pointerId);
-      updatePosition(e.clientX);
+      applyPosition(getPercent(e.clientX));
     },
-    [updatePosition],
+    [applyPosition, getPercent],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!isDragging.current) return;
-      updatePosition(e.clientX);
+      const clientX = e.clientX;
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        applyPosition(getPercent(clientX));
+      });
     },
-    [updatePosition],
+    [applyPosition, getPercent],
   );
 
   const handlePointerUp = useCallback(() => {
     isDragging.current = false;
+    cancelAnimationFrame(rafId.current);
   }, []);
 
   const handleReset = useCallback(() => {
-    if (!isDragging.current) {
-      animate(position, 50, { type: "spring", stiffness: 300, damping: 25 });
-    }
-  }, [position]);
+    if (isDragging.current) return;
+    // Simple spring animation to 50% via rAF
+    const target = 50;
+    let current = positionRef.current;
+    let velocity = 0;
+    const stiffness = 0.08;
+    const damping = 0.75;
+
+    const step = () => {
+      const distance = target - current;
+      velocity = (velocity + distance * stiffness) * damping;
+      current += velocity;
+
+      if (Math.abs(distance) < 0.1 && Math.abs(velocity) < 0.1) {
+        applyPosition(target);
+        return;
+      }
+      applyPosition(current);
+      rafId.current = requestAnimationFrame(step);
+    };
+    cancelAnimationFrame(rafId.current);
+    rafId.current = requestAnimationFrame(step);
+  }, [applyPosition]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -88,10 +128,11 @@ export default function BeforeAfterSlider({
           priority
         />
 
-        {/* Before image (clip) */}
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={{ clipPath }}
+        {/* Before image (clip) — DOM direct, pas de Framer Motion */}
+        <div
+          ref={beforeClipRef}
+          className="absolute inset-0"
+          style={{ clipPath: "inset(0 50% 0 0)", willChange: "clip-path" }}
         >
           <Image
             src={beforeImage}
@@ -101,18 +142,20 @@ export default function BeforeAfterSlider({
             className="object-cover"
             priority
           />
-        </motion.div>
+        </div>
 
         {/* Barre de séparation */}
-        <motion.div
-          className="absolute top-0 bottom-0 z-10 w-0.5 bg-white shadow-[0_0_8px_rgba(0,0,0,0.3)] will-change-transform"
-          style={{ left: separatorLeft }}
+        <div
+          ref={lineRef}
+          className="absolute top-0 bottom-0 z-10 w-0.5 bg-white shadow-[0_0_8px_rgba(0,0,0,0.3)]"
+          style={{ left: "50%", willChange: "left" }}
         />
 
         {/* Poignée */}
-        <motion.div
-          className="absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 will-change-transform"
-          style={{ left: separatorLeft }}
+        <div
+          ref={handleRef}
+          className="absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2"
+          style={{ left: "50%", willChange: "left" }}
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-primary shadow-lg">
             <svg
@@ -130,21 +173,21 @@ export default function BeforeAfterSlider({
               <path d="M16 3l5 5-5 5" />
             </svg>
           </div>
-        </motion.div>
+        </div>
 
         {/* Labels Avant / Après */}
-        <motion.span
-          className="absolute top-4 left-4 z-10 rounded-full bg-secondary/70 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm"
-          style={{ opacity: beforeOpacity }}
+        <span
+          ref={beforeLabelRef}
+          className="absolute top-4 left-4 z-10 rounded-full bg-secondary/70 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm transition-opacity duration-150"
         >
           Avant
-        </motion.span>
-        <motion.span
-          className="absolute top-4 right-4 z-10 rounded-full bg-primary/80 px-3 py-1 text-xs font-medium text-secondary backdrop-blur-sm"
-          style={{ opacity: afterOpacity }}
+        </span>
+        <span
+          ref={afterLabelRef}
+          className="absolute top-4 right-4 z-10 rounded-full bg-primary/80 px-3 py-1 text-xs font-medium text-secondary backdrop-blur-sm transition-opacity duration-150"
         >
           Après
-        </motion.span>
+        </span>
       </div>
     </div>
   );
