@@ -49,15 +49,15 @@ export default function Services() {
         </AnimateOnScroll>
         <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-8 md:grid-cols-3">
           {services.map((service, index) => (
-            <AnimateOnScroll key={service.titre} delay={index * 0.1}>
-              <div className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl sm:p-8">
+            <AnimateOnScroll key={service.titre} delay={index * 0.1} className="h-full">
+              <div className="group flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl sm:p-8">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-secondary sm:h-14 sm:w-14">
                   {service.icon}
                 </div>
                 <h3 className="mt-4 text-base font-bold text-secondary sm:mt-5 sm:text-lg">
                   {service.titre}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-600 sm:mt-3">
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 sm:mt-3">
                   {service.description}
                 </p>
                 <a
